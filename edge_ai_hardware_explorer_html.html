@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Edge AI Hardware Explorer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #070912;
+      --panel: rgba(255, 255, 255, 0.075);
+      --panel-strong: rgba(255, 255, 255, 0.12);
+      --border: rgba(255, 255, 255, 0.16);
+      --text: #f7f9ff;
+      --muted: #aeb7cc;
+      --pink: #ff4fa3;
+      --cyan: #3ee8ff;
+      --green: #78ffb5;
+      --yellow: #ffd166;
+      --red: #ff6b6b;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 10% 10%, rgba(255, 79, 163, 0.18), transparent 32%),
+        radial-gradient(circle at 90% 5%, rgba(62, 232, 255, 0.14), transparent 30%),
+        radial-gradient(circle at 50% 100%, rgba(120, 255, 181, 0.1), transparent 34%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      overflow-x: hidden;
+    }
+
+    .grid-bg {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: linear-gradient(to bottom, black, transparent 85%);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    nav {
+      width: min(1180px, calc(100% - 36px));
+      margin: 18px auto 0;
+      padding: 14px 18px;
+      border: 1px solid var(--border);
+      background: rgba(7, 9, 18, 0.72);
+      backdrop-filter: blur(18px);
+      border-radius: 999px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 18px;
+      z-index: 20;
+      box-shadow: var(--shadow);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .chip {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--pink), var(--cyan));
+      display: grid;
+      place-items: center;
+      box-shadow: 0 0 30px rgba(255, 79, 163, 0.5);
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      margin-left: 22px;
+      font-size: 0.95rem;
+      font-weight: 650;
+      transition: 0.25s;
+    }
+
+    .nav-links a:hover {
+      color: var(--text);
+    }
+
+    .hero {
+      width: min(1180px, calc(100% - 36px));
+      margin: 78px auto 52px;
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 36px;
+      align-items: center;
+    }
+
+    .eyebrow {
+      color: var(--green);
+      border: 1px solid rgba(120, 255, 181, 0.28);
+      background: rgba(120, 255, 181, 0.08);
+      width: fit-content;
+      padding: 9px 14px;
+      border-radius: 999px;
+      font-weight: 750;
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      font-size: clamp(3rem, 7vw, 6.5rem);
+      line-height: 0.92;
+      letter-spacing: -0.075em;
+      margin-bottom: 24px;
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, var(--pink), var(--cyan), var(--green));
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    .hero p {
+      color: var(--muted);
+      font-size: 1.22rem;
+      line-height: 1.7;
+      max-width: 710px;
+      margin-bottom: 30px;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .btn {
+      border: 1px solid var(--border);
+      color: var(--text);
+      text-decoration: none;
+      background: var(--panel);
+      padding: 14px 19px;
+      border-radius: 999px;
+      font-weight: 800;
+      transition: 0.25s;
+      cursor: pointer;
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, var(--pink), #874cff);
+      border: none;
+      box-shadow: 0 18px 44px rgba(255, 79, 163, 0.22);
+    }
+
+    .btn:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 18px 44px rgba(62, 232, 255, 0.16);
+    }
+
+    .hero-visual {
+      min-height: 490px;
+      border: 1px solid var(--border);
+      background: linear-gradient(145deg, rgba(255,255,255,0.1), rgba(255,255,255,0.035));
+      border-radius: 34px;
+      box-shadow: var(--shadow);
+      padding: 26px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-visual::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background: conic-gradient(from 90deg, transparent, rgba(255,79,163,.18), transparent, rgba(62,232,255,.16), transparent);
+      animation: spin 11s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .system-card {
+      position: relative;
+      z-index: 1;
+      background: rgba(7, 9, 18, 0.8);
+      border: 1px solid var(--border);
+      border-radius: 26px;
+      padding: 24px;
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 22px;
+    }
+
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      align-items: center;
+    }
+
+    .node {
+      padding: 16px 12px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.055);
+      text-align: center;
+      min-height: 100px;
+      display: grid;
+      place-items: center;
+      font-weight: 850;
+      color: var(--text);
+      position: relative;
+    }
+
+    .node small {
+      display: block;
+      color: var(--muted);
+      font-weight: 650;
+      margin-top: 7px;
+    }
+
+    .signal {
+      height: 190px;
+      border-radius: 24px;
+      border: 1px solid var(--border);
+      background:
+        linear-gradient(90deg, transparent 49%, rgba(255,255,255,0.06) 50%, transparent 51%),
+        linear-gradient(180deg, transparent 49%, rgba(255,255,255,0.06) 50%, transparent 51%),
+        rgba(255,255,255,0.035);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .wave {
+      position: absolute;
+      left: -10%;
+      top: 50%;
+      width: 120%;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, var(--cyan), var(--pink), transparent);
+      border-radius: 999px;
+      box-shadow: 0 0 24px var(--cyan);
+      animation: pulse 2.7s ease-in-out infinite;
+    }
+
+    .wave:nth-child(2) { top: 35%; animation-delay: .5s; opacity: .55; }
+    .wave:nth-child(3) { top: 68%; animation-delay: 1s; opacity: .55; }
+
+    @keyframes pulse {
+      0%, 100% { transform: translateX(-6%) scaleX(.8); }
+      50% { transform: translateX(6%) scaleX(1.08); }
+    }
+
+    .metrics-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .metric-mini {
+      background: rgba(255, 255, 255, 0.055);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .metric-mini span {
+      color: var(--muted);
+      font-size: .82rem;
+      font-weight: 700;
+      display: block;
+      margin-bottom: 7px;
+    }
+
+    .metric-mini strong {
+      font-size: 1.35rem;
+    }
+
+    section {
+      width: min(1180px, calc(100% - 36px));
+      margin: 0 auto;
+      padding: 70px 0;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 22px;
+      margin-bottom: 26px;
+    }
+
+    .section-header h2 {
+      font-size: clamp(2rem, 4vw, 3.4rem);
+      letter-spacing: -0.055em;
+    }
+
+    .section-header p {
+      color: var(--muted);
+      max-width: 530px;
+      line-height: 1.6;
+    }
+
+    .explorer {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 22px;
+      align-items: start;
+    }
+
+    .panel {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      backdrop-filter: blur(18px);
+      border-radius: 30px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .control-group {
+      margin-bottom: 24px;
+    }
+
+    .control-group label {
+      display: block;
+      color: var(--text);
+      font-weight: 850;
+      margin-bottom: 10px;
+    }
+
+    select, input[type="range"] {
+      width: 100%;
+    }
+
+    select {
+      background: rgba(7, 9, 18, 0.78);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 14px 16px;
+      border-radius: 16px;
+      outline: none;
+      font-weight: 750;
+    }
+
+    input[type="range"] {
+      accent-color: var(--pink);
+    }
+
+    .range-line {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: .9rem;
+      margin-top: 8px;
+    }
+
+    .results {
+      display: grid;
+      gap: 18px;
+    }
+
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    .score-card {
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 22px;
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .score-card::after {
+      content: "";
+      position: absolute;
+      inset: auto -30% -70% -30%;
+      height: 100px;
+      background: var(--glow, rgba(255,79,163,.2));
+      filter: blur(34px);
+    }
+
+    .score-card span {
+      color: var(--muted);
+      font-weight: 750;
+      font-size: .85rem;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .score-card strong {
+      font-size: 2rem;
+      letter-spacing: -0.06em;
+      position: relative;
+      z-index: 1;
+    }
+
+    .chart-card {
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.055);
+      border-radius: 24px;
+      padding: 22px;
+    }
+
+    .chart-title {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      color: var(--muted);
+      font-weight: 850;
+    }
+
+    .bars {
+      display: grid;
+      gap: 15px;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 90px 1fr 72px;
+      gap: 12px;
+      align-items: center;
+      font-size: .94rem;
+      color: var(--muted);
+    }
+
+    .bar-shell {
+      height: 14px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 50%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--cyan), var(--pink));
+      transition: width .45s ease;
+    }
+
+    .deployment {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+    }
+
+    .device {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.055);
+      border-radius: 28px;
+      padding: 24px;
+      transition: .25s;
+      min-height: 260px;
+    }
+
+    .device.active {
+      border-color: rgba(120, 255, 181, 0.55);
+      box-shadow: 0 0 45px rgba(120,255,181,0.12);
+      transform: translateY(-5px);
+    }
+
+    .device h3 {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+    }
+
+    .device p {
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 18px;
+    }
+
+    .spec-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .spec {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      color: var(--muted);
+    }
+
+    .spec strong {
+      color: var(--text);
+    }
+
+    .constraints {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+
+    .constraint-card {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      border-radius: 28px;
+      padding: 24px;
+      min-height: 210px;
+      transition: .25s;
+    }
+
+    .constraint-card:hover {
+      transform: translateY(-7px);
+      background: var(--panel-strong);
+    }
+
+    .constraint-card .icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      font-size: 1.4rem;
+      margin-bottom: 18px;
+      background: linear-gradient(135deg, rgba(255,79,163,.24), rgba(62,232,255,.16));
+    }
+
+    .constraint-card h3 {
+      margin-bottom: 10px;
+      font-size: 1.25rem;
+    }
+
+    .constraint-card p {
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    footer {
+      width: min(1180px, calc(100% - 36px));
+      margin: 0 auto 28px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 980px) {
+      .hero, .explorer, .deployment {
+        grid-template-columns: 1fr;
+      }
+
+      .score-grid, .constraints {
+        grid-template-columns: 1fr;
+      }
+
+      .pipeline {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .nav-links {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="grid-bg"></div>
+
+  <nav>
+    <div class="logo"><div class="chip">⚙</div> Edge AI Hardware Explorer</div>
+    <div class="nav-links">
+      <a href="#explorer">Explorer</a>
+      <a href="#deployment">Deployment</a>
+      <a href="#constraints">Constraints</a>
+      <a href="#formulas">How It Works</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div>
+      <div class="eyebrow">Interactive edge deployment simulator</div>
+      <h1>Optimize AI for <span class="gradient-text">real hardware.</span></h1>
+      <p>
+        Choose a neural network, pick an embedded platform, quantize the model, and instantly visualize the latency, memory, accuracy, and power tradeoffs behind edge AI deployment.
+      </p>
+      <div class="button-row">
+        <a class="btn primary" href="#explorer">Launch Explorer</a>
+        <a class="btn" href="#deployment">Compare Hardware</a>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="system-card">
+        <div class="pipeline">
+          <div class="node">Model<small>CNN / Transformer</small></div>
+          <div class="node">Quantize<small>FP32 → INT8</small></div>
+          <div class="node">Deploy<small>Jetson / STM32</small></div>
+          <div class="node">Measure<small>Latency + Power</small></div>
+        </div>
+        <div class="signal">
+          <div class="wave"></div>
+          <div class="wave"></div>
+          <div class="wave"></div>
+        </div>
+        <div class="metrics-strip">
+          <div class="metric-mini"><span>Latency</span><strong id="heroLatency">18 ms</strong></div>
+          <div class="metric-mini"><span>Power</span><strong id="heroPower">8.5 W</strong></div>
+          <div class="metric-mini"><span>Accuracy</span><strong id="heroAccuracy">91%</strong></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section id="explorer">
+    <div class="section-header">
+      <div>
+        <h2>Model Optimization Explorer</h2>
+      </div>
+      <p>
+        This simulator uses realistic-style estimates to show how model size, hardware class, and quantization level affect deployment tradeoffs.
+      </p>
+    </div>
+
+    <div class="explorer">
+      <aside class="panel">
+        <div class="control-group">
+          <label for="modelSelect">Choose neural network</label>
+          <select id="modelSelect">
+            <option value="mobilenet">MobileNetV2 — vision</option>
+            <option value="resnet">ResNet-18 — image classification</option>
+            <option value="tinyyolo">Tiny YOLO — object detection</option>
+            <option value="transformer">Tiny Transformer — sensor fusion</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label for="hardwareSelect">Choose hardware</label>
+          <select id="hardwareSelect">
+            <option value="jetson">NVIDIA Jetson Orin Nano</option>
+            <option value="stm32">STM32 Microcontroller</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label for="quantRange">Quantization level: <span id="quantLabel">INT8</span></label>
+          <input id="quantRange" type="range" min="0" max="3" value="2" step="1" />
+          <div class="range-line"><span>FP32</span><span>FP16</span><span>INT8</span><span>INT4</span></div>
+        </div>
+
+        <div class="control-group">
+          <label for="batchRange">Batch size: <span id="batchLabel">1</span></label>
+          <input id="batchRange" type="range" min="1" max="8" value="1" step="1" />
+          <div class="range-line"><span>real-time</span><span>throughput</span></div>
+        </div>
+
+        <button class="btn primary" style="width:100%" onclick="randomizeSetup()">Randomize Test Setup</button>
+      </aside>
+
+      <main class="results">
+        <div class="score-grid">
+          <div class="score-card" style="--glow: rgba(62,232,255,.22)"><span>Estimated latency</span><strong id="latencyOut">18 ms</strong></div>
+          <div class="score-card" style="--glow: rgba(255,79,163,.22)"><span>Power draw</span><strong id="powerOut">8.5 W</strong></div>
+          <div class="score-card" style="--glow: rgba(120,255,181,.22)"><span>Accuracy</span><strong id="accuracyOut">91%</strong></div>
+          <div class="score-card" style="--glow: rgba(255,209,102,.22)"><span>Memory</span><strong id="memoryOut">12 MB</strong></div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-title"><span>Tradeoff visualization</span><span id="profileLabel">Jetson + INT8</span></div>
+          <div class="bars">
+            <div class="bar-row"><span>Speed</span><div class="bar-shell"><div class="bar-fill" id="speedBar"></div></div><span id="speedText">82%</span></div>
+            <div class="bar-row"><span>Accuracy</span><div class="bar-shell"><div class="bar-fill" id="accuracyBar"></div></div><span id="accuracyText">91%</span></div>
+            <div class="bar-row"><span>Efficiency</span><div class="bar-shell"><div class="bar-fill" id="efficiencyBar"></div></div><span id="efficiencyText">76%</span></div>
+            <div class="bar-row"><span>Memory Fit</span><div class="bar-shell"><div class="bar-fill" id="memoryBar"></div></div><span id="memoryText">94%</span></div>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-title"><span>Deployment recommendation</span><span id="recommendationBadge">Recommended</span></div>
+          <p id="recommendationText" style="color:var(--muted); line-height:1.7; font-size:1.05rem;"></p>
+        </div>
+      </main>
+    </div>
+  </section>
+
+  <section id="deployment">
+    <div class="section-header">
+      <div>
+        <h2>Jetson vs STM32</h2>
+      </div>
+      <p>
+        Edge AI is never just about accuracy. The best platform depends on compute budget, memory, latency, power, and sensor constraints.
+      </p>
+    </div>
+
+    <div class="deployment">
+      <div class="device" id="jetsonCard">
+        <h3>NVIDIA Jetson Orin Nano</h3>
+        <p>Best for camera-heavy inference, object detection, sensor fusion, and accelerated neural network workloads.</p>
+        <div class="spec-list">
+          <div class="spec"><span>Best use</span><strong>High-performance edge AI</strong></div>
+          <div class="spec"><span>Strength</span><strong>GPU acceleration</strong></div>
+          <div class="spec"><span>Constraint</span><strong>Higher power draw</strong></div>
+          <div class="spec"><span>Ideal model</span><strong>YOLO / CNN / Transformer</strong></div>
+        </div>
+      </div>
+
+      <div class="device" id="stm32Card">
+        <h3>STM32 Microcontroller</h3>
+        <p>Best for ultra-low-power sensing, tiny ML, simple classifiers, always-on monitoring, and embedded control.</p>
+        <div class="spec-list">
+          <div class="spec"><span>Best use</span><strong>Low-power sensing</strong></div>
+          <div class="spec"><span>Strength</span><strong>Efficiency</strong></div>
+          <div class="spec"><span>Constraint</span><strong>Memory + compute limits</strong></div>
+          <div class="spec"><span>Ideal model</span><strong>Quantized tiny CNN</strong></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="constraints">
+    <div class="section-header">
+      <div>
+        <h2>Real Embedded Constraints</h2>
+      </div>
+      <p>
+        The explorer highlights the hidden engineering tradeoffs that turn a trained model into a deployable hardware system.
+      </p>
+    </div>
+
+    <div class="constraints">
+      <div class="constraint-card">
+        <div class="icon">⏱</div>
+        <h3>Latency</h3>
+        <p>Real-time systems must respond quickly. A model that is accurate but too slow can fail in safety-critical or interactive applications.</p>
+      </div>
+      <div class="constraint-card">
+        <div class="icon">🔋</div>
+        <h3>Power</h3>
+        <p>Edge devices often run on batteries or strict thermal limits, making energy efficiency as important as model performance.</p>
+      </div>
+      <div class="constraint-card">
+        <div class="icon">🧠</div>
+        <h3>Memory</h3>
+        <p>Quantization reduces model size, but aggressive compression can lower accuracy and affect robustness under noisy conditions.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="formulas">
+    <div class="section-header">
+      <div>
+        <h2>How Does This Work?</h2>
+      </div>
+      <p>
+        The explorer uses simplified engineering-inspired equations to estimate how embedded AI deployment changes across different hardware platforms and quantization strategies.
+      </p>
+    </div>
+
+    <div class="panel" style="padding:40px; overflow:hidden; position:relative;">
+      <div style="position:absolute; inset:auto -10% -40% auto; width:320px; height:320px; background:rgba(255,79,163,0.14); filter:blur(60px); border-radius:50%;"></div>
+
+      <div style="display:grid; gap:28px; position:relative; z-index:1;">
+
+        <div style="border:1px solid var(--border); background:rgba(255,255,255,0.05); border-radius:24px; padding:28px;">
+          <h3 style="margin-bottom:14px; color:var(--cyan); font-size:1.4rem;">Latency Formula</h3>
+          <p style="font-size:1.15rem; color:var(--text); line-height:1.8;">
+            latency = model base latency × hardware speed factor × quantization latency factor × batch factor
+          </p>
+        </div>
+
+        <div style="border:1px solid var(--border); background:rgba(255,255,255,0.05); border-radius:24px; padding:28px;">
+          <h3 style="margin-bottom:14px; color:var(--pink); font-size:1.4rem;">Power Formula</h3>
+          <p style="font-size:1.15rem; color:var(--text); line-height:1.8;">
+            power = model base power × hardware power factor × quantization power factor × batch factor
+          </p>
+        </div>
+
+        <div style="border:1px solid var(--border); background:rgba(255,255,255,0.05); border-radius:24px; padding:28px;">
+          <h3 style="margin-bottom:14px; color:var(--green); font-size:1.4rem;">Accuracy Formula</h3>
+          <p style="font-size:1.15rem; color:var(--text); line-height:1.8;">
+            accuracy = model base accuracy × quantization accuracy factor × hardware accuracy factor
+          </p>
+        </div>
+
+        <div style="border:1px solid var(--border); background:rgba(255,255,255,0.05); border-radius:24px; padding:28px;">
+          <h3 style="margin-bottom:14px; color:var(--yellow); font-size:1.4rem;">Memory Formula</h3>
+          <p style="font-size:1.15rem; color:var(--text); line-height:1.8;">
+            memory = model base memory × hardware memory factor × quantization memory factor
+          </p>
+        </div>
+
+        <div style="border:1px solid rgba(120,255,181,0.2); background:rgba(120,255,181,0.05); border-radius:24px; padding:24px; color:var(--muted); line-height:1.8;">
+          These equations are simplified educational approximations designed to visualize real edge AI deployment tradeoffs such as latency, power efficiency, quantization effects, and memory constraints across embedded hardware systems.
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Edge AI Hardware Explorer</span>
+    <span>Built to visualize AI deployment tradeoffs across embedded hardware.</span>
+  </footer>
+
+  <script>
+    const models = {
+      mobilenet: { name: "MobileNetV2", latency: 18, power: 8.5, accuracy: 93, memory: 14, fit: 96 },
+      resnet: { name: "ResNet-18", latency: 32, power: 11.2, accuracy: 95, memory: 44, fit: 78 },
+      tinyyolo: { name: "Tiny YOLO", latency: 45, power: 13.8, accuracy: 89, memory: 62, fit: 65 },
+      transformer: { name: "Tiny Transformer", latency: 26, power: 9.9, accuracy: 91, memory: 28, fit: 84 }
+    };
+
+    const hardware = {
+      jetson: { name: "Jetson Orin Nano", speed: 1, power: 1, memory: 1, accuracy: 1, fitBoost: 1 },
+      stm32: { name: "STM32", speed: 4.7, power: 0.11, memory: 2.9, accuracy: 0.98, fitBoost: 0.58 }
+    };
+
+    const quantModes = [
+      { name: "FP32", latency: 1.45, power: 1.25, accuracy: 1, memory: 1.0, efficiency: 48 },
+      { name: "FP16", latency: 1.0, power: 0.9, accuracy: 0.995, memory: 0.5, efficiency: 68 },
+      { name: "INT8", latency: 0.63, power: 0.62, accuracy: 0.975, memory: 0.25, efficiency: 86 },
+      { name: "INT4", latency: 0.45, power: 0.48, accuracy: 0.925, memory: 0.125, efficiency: 94 }
+    ];
+
+    const modelSelect = document.getElementById("modelSelect");
+    const hardwareSelect = document.getElementById("hardwareSelect");
+    const quantRange = document.getElementById("quantRange");
+    const batchRange = document.getElementById("batchRange");
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function updateExplorer() {
+      const model = models[modelSelect.value];
+      const hw = hardware[hardwareSelect.value];
+      const quant = quantModes[Number(quantRange.value)];
+      const batch = Number(batchRange.value);
+
+      const batchFactor = 1 + (batch - 1) * 0.18;
+      const latency = model.latency * hw.speed * quant.latency * batchFactor;
+      const power = model.power * hw.power * quant.power * (1 + (batch - 1) * 0.08);
+      const accuracy = model.accuracy * quant.accuracy * hw.accuracy;
+      const memory = model.memory * hw.memory * quant.memory;
+
+      const speedScore = clamp(100 - latency, 8, 99);
+      const accuracyScore = clamp(accuracy, 40, 99);
+      const efficiencyScore = clamp(quant.efficiency + (hardwareSelect.value === "stm32" ? 4 : 0) - (power * 2.2), 10, 99);
+      const memoryScore = clamp(model.fit * hw.fitBoost + (100 - memory) * 0.15, 5, 99);
+
+      document.getElementById("quantLabel").textContent = quant.name;
+      document.getElementById("batchLabel").textContent = batch;
+      document.getElementById("latencyOut").textContent = latency.toFixed(1) + " ms";
+      document.getElementById("powerOut").textContent = power.toFixed(2) + " W";
+      document.getElementById("accuracyOut").textContent = accuracy.toFixed(1) + "%";
+      document.getElementById("memoryOut").textContent = memory.toFixed(1) + " MB";
+      document.getElementById("heroLatency").textContent = latency.toFixed(0) + " ms";
+      document.getElementById("heroPower").textContent = power.toFixed(1) + " W";
+      document.getElementById("heroAccuracy").textContent = accuracy.toFixed(0) + "%";
+      document.getElementById("profileLabel").textContent = hw.name + " + " + quant.name;
+
+      setBar("speed", speedScore);
+      setBar("accuracy", accuracyScore);
+      setBar("efficiency", efficiencyScore);
+      setBar("memory", memoryScore);
+
+      document.getElementById("jetsonCard").classList.toggle("active", hardwareSelect.value === "jetson");
+      document.getElementById("stm32Card").classList.toggle("active", hardwareSelect.value === "stm32");
+
+      let recommendation = "";
+      let badge = "Recommended";
+
+      if (hardwareSelect.value === "jetson") {
+        if (quant.name === "INT8") {
+          recommendation = `${model.name} on Jetson with INT8 is a strong deployment profile: it balances low latency, reduced memory use, and high accuracy while keeping enough compute headroom for real-time sensor or camera pipelines.`;
+        } else if (quant.name === "INT4") {
+          recommendation = `${model.name} on Jetson with INT4 is highly efficient, but the accuracy drop may matter if the task is safety-critical or sensitive to noisy inputs.`;
+        } else {
+          recommendation = `${model.name} on Jetson with ${quant.name} prioritizes accuracy and model fidelity, but uses more power and memory than a quantized deployment.`;
+        }
+      } else {
+        if (memory > 1.5 || latency > 140) {
+          badge = "Constraint warning";
+          recommendation = `${model.name} is challenging for STM32 under this setup. Consider a smaller model, INT8/INT4 quantization, pruning, or moving heavier inference to Jetson while keeping STM32 for sensing and control.`;
+        } else {
+          recommendation = `${model.name} can fit an STM32-style tinyML deployment when quantized aggressively. This setup is best for low-power sensing, simple classification, and always-on monitoring.`;
+        }
+      }
+
+      document.getElementById("recommendationBadge").textContent = badge;
+      document.getElementById("recommendationText").textContent = recommendation;
+    }
+
+    function setBar(id, value) {
+      document.getElementById(id + "Bar").style.width = value + "%";
+      document.getElementById(id + "Text").textContent = Math.round(value) + "%";
+    }
+
+    function randomizeSetup() {
+      const modelKeys = Object.keys(models);
+      const hardwareKeys = Object.keys(hardware);
+      modelSelect.value = modelKeys[Math.floor(Math.random() * modelKeys.length)];
+      hardwareSelect.value = hardwareKeys[Math.floor(Math.random() * hardwareKeys.length)];
+      quantRange.value = Math.floor(Math.random() * 4);
+      batchRange.value = Math.floor(Math.random() * 8) + 1;
+      updateExplorer();
+    }
+
+    [modelSelect, hardwareSelect, quantRange, batchRange].forEach(el => {
+      el.addEventListener("input", updateExplorer);
+      el.addEventListener("change", updateExplorer);
+    });
+
+    updateExplorer();
+  </script>
+</body>
+</html>
